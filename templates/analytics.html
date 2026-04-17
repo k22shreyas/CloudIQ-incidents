@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Analytics — Cloud Incident DB</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+</head>
+<body>
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark-navy px-4">
+  <a class="navbar-brand fw-bold" href="/">
+    <i class="bi bi-cloud-lightning-fill text-accent me-2"></i>CloudIQ Incidents
+  </a>
+  <div class="ms-auto d-flex gap-3">
+    <a href="/" class="nav-link text-white"><i class="bi bi-table me-1"></i>Incidents</a>
+    <a href="/analytics" class="nav-link text-white active"><i class="bi bi-bar-chart-line me-1"></i>Analytics</a>
+  </div>
+</nav>
+
+<div class="container-fluid px-4 pt-4" id="analyticsRoot">
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+    <p class="text-muted mt-3">Loading analytics…</p>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ── Palette ─────────────────────────────────────────────────
+const PALETTE = {
+  blue:   ['#3b82f6','#2563eb','#1d4ed8','#1e40af','#1e3a8a','#3730a3'],
+  sev:    {'Critical':'#ef4444','High':'#f97316','Medium':'#eab308','Low':'#22c55e'},
+  status: {'Resolved':'#22c55e','Investigating':'#f97316','Monitoring':'#3b82f6'},
+  multi:  ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'],
+};
+
+const chartDefaults = {
+  responsive: true,
+  plugins: {
+    legend: { labels: { color: '#94a3b8', font: { size: 12 } } },
+    tooltip: { backgroundColor: '#1e293b', titleColor: '#e2e8f0', bodyColor: '#94a3b8' }
+  },
+  scales: {
+    x: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' } },
+    y: { ticks: { color: '#64748b' }, grid: { color: '#334155' } }
+  }
+};
+
+function mkBar(ctx, labels, data, colors, label) {
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label, data, backgroundColor: colors, borderRadius: 6 }]
+    },
+    options: { ...chartDefaults, plugins: { ...chartDefaults.plugins,
+        legend: { display: false } } }
+  });
+}
+
+function mkDoughnut(ctx, labels, data, colors) {
+  return new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2 }] },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'right', labels: { color: '#94a3b8' } },
+        tooltip: chartDefaults.plugins.tooltip
+      },
+      cutout: '65%'
+    }
+  });
+}
+
+function mkHorizontalBar(ctx, labels, data, colors, label) {
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label, data, backgroundColor: colors, borderRadius: 6 }]
+    },
+    options: {
+      ...chartDefaults,
+      indexAxis: 'y',
+      plugins: { ...chartDefaults.plugins, legend: { display: false } }
+    }
+  });
+}
+
+// ── Build entire analytics page from API data ────────────────
+function buildPage(d) {
+  const root = document.getElementById('analyticsRoot');
+  const kpis = d.kpis;
+
+  root.innerHTML = `
+  <!-- KPI ROW -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-2">
+      <div class="kpi-card">
+        <div class="kpi-icon bg-blue"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <div><div class="kpi-label">Total Incidents</div>
+          <div class="kpi-value">${kpis.total_incidents}</div></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-2">
+      <div class="kpi-card">
+        <div class="kpi-icon bg-red"><i class="bi bi-currency-dollar"></i></div>
+        <div><div class="kpi-label">Revenue Lost</div>
+          <div class="kpi-value">$${kpis.total_loss_m}M</div></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-2">
+      <div class="kpi-card">
+        <div class="kpi-icon bg-orange"><i class="bi bi-people-fill"></i></div>
+        <div><div class="kpi-label">Customers Affected</div>
+          <div class="kpi-value">${Number(kpis.total_customers).toLocaleString()}</div></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-2">
+      <div class="kpi-card">
+        <div class="kpi-icon bg-green"><i class="bi bi-clock-history"></i></div>
+        <div><div class="kpi-label">Avg Duration</div>
+          <div class="kpi-value">${kpis.avg_duration_min} min</div></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-2">
+      <div class="kpi-card">
+        <div class="kpi-icon bg-purple"><i class="bi bi-shield-exclamation"></i></div>
+        <div><div class="kpi-label">SLA Violation %</div>
+          <div class="kpi-value">${kpis.sla_violation_pct}%</div></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-2">
+      <div class="kpi-card">
+        <div class="kpi-icon bg-orange"><i class="bi bi-search"></i></div>
+        <div><div class="kpi-label">Open Incidents</div>
+          <div class="kpi-value">${kpis.open_incidents}</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-building me-2"></i>Incidents by Provider</div>
+        <canvas id="chartProvider" height="220"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-exclamation-circle me-2"></i>Incidents by Severity</div>
+        <canvas id="chartSeverity" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 2 -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-currency-dollar me-2"></i>Revenue Loss by Root Cause ($ Millions)</div>
+        <canvas id="chartCause" height="220"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-check2-circle me-2"></i>Incidents by Status</div>
+        <canvas id="chartStatus" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 3 -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-hourglass-split me-2"></i>Avg Downtime by Severity (minutes)</div>
+        <canvas id="chartDuration" height="220"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-shield-x me-2"></i>SLA Violation Rate by Provider (%)</div>
+        <canvas id="chartSLA" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHART ROW 4 - full width -->
+  <div class="row g-4 mb-5">
+    <div class="col-12">
+      <div class="chart-card">
+        <div class="chart-title"><i class="bi bi-geo-alt me-2"></i>Top Regions by Customers Affected</div>
+        <canvas id="chartRegion" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+  `;
+
+  // ── Chart 1: By Provider (bar) ──────────────────────────
+  mkBar(
+    document.getElementById('chartProvider').getContext('2d'),
+    d.by_provider.map(r=>r.label),
+    d.by_provider.map(r=>r.value),
+    d.by_provider.map((_,i)=>PALETTE.multi[i % PALETTE.multi.length]),
+    'Incidents'
+  );
+
+  // ── Chart 2: By Severity (doughnut) ────────────────────
+  mkDoughnut(
+    document.getElementById('chartSeverity').getContext('2d'),
+    d.by_severity.map(r=>r.label),
+    d.by_severity.map(r=>r.value),
+    d.by_severity.map(r=>PALETTE.sev[r.label]||'#64748b')
+  );
+
+  // ── Chart 3: Revenue by Cause (horizontal bar) ─────────
+  mkHorizontalBar(
+    document.getElementById('chartCause').getContext('2d'),
+    d.by_cause.map(r=>r.label),
+    d.by_cause.map(r=>r.value),
+    d.by_cause.map((_,i)=>PALETTE.multi[i % PALETTE.multi.length]),
+    'Loss ($M)'
+  );
+
+  // ── Chart 4: By Status (doughnut) ──────────────────────
+  mkDoughnut(
+    document.getElementById('chartStatus').getContext('2d'),
+    d.by_status.map(r=>r.label),
+    d.by_status.map(r=>r.value),
+    d.by_status.map(r=>PALETTE.status[r.label]||'#64748b')
+  );
+
+  // ── Chart 5: Avg duration by severity (bar) ─────────────
+  mkBar(
+    document.getElementById('chartDuration').getContext('2d'),
+    d.avg_duration.map(r=>r.label),
+    d.avg_duration.map(r=>r.value),
+    d.avg_duration.map(r=>PALETTE.sev[r.label]||'#64748b'),
+    'Avg Duration (min)'
+  );
+
+  // ── Chart 6: SLA rate by provider (bar) ─────────────────
+  mkBar(
+    document.getElementById('chartSLA').getContext('2d'),
+    d.sla_rate.map(r=>r.label),
+    d.sla_rate.map(r=>r.value),
+    d.sla_rate.map((_,i)=>PALETTE.multi[i % PALETTE.multi.length]),
+    'SLA Violation %'
+  );
+
+  // ── Chart 7: Customers by region (horizontal bar) ────────
+  mkHorizontalBar(
+    document.getElementById('chartRegion').getContext('2d'),
+    d.by_region.map(r=>r.label),
+    d.by_region.map(r=>r.value),
+    d.by_region.map((_,i)=>PALETTE.multi[i % PALETTE.multi.length]),
+    'Customers Affected'
+  );
+}
+
+// ── Fetch and render ─────────────────────────────────────────
+fetch('/api/analytics')
+  .then(r => r.json())
+  .then(buildPage)
+  .catch(err => {
+    document.getElementById('analyticsRoot').innerHTML =
+      `<div class="alert alert-danger">Failed to load analytics: ${err}</div>`;
+  });
+</script>
+</body>
+</html>

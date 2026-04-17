@@ -1,0 +1,194 @@
+/* ============================================================
+   Cloud Incident DB — Global Styles (Dark Theme)
+   ============================================================ */
+
+:root {
+  --navy:   #0f172a;
+  --card:   #1e293b;
+  --border: #334155;
+  --text:   #e2e8f0;
+  --muted:  #94a3b8;
+  --accent: #3b82f6;
+  --green:  #22c55e;
+  --red:    #ef4444;
+  --orange: #f97316;
+  --purple: #8b5cf6;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background-color: var(--navy);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* ── Navbar ─────────────────────────────────────────────── */
+.bg-dark-navy { background-color: #0a0f1e !important; }
+.text-accent  { color: var(--accent) !important; }
+
+.btn-accent {
+  background-color: var(--accent);
+  border-color:     var(--accent);
+  color:            #fff;
+}
+.btn-accent:hover {
+  background-color: #2563eb;
+  border-color:     #2563eb;
+  color:            #fff;
+}
+
+/* ── KPI Cards ──────────────────────────────────────────── */
+.kpi-card {
+  background:    var(--card);
+  border:        1px solid var(--border);
+  border-radius: 12px;
+  padding:       1rem 1.2rem;
+  display:       flex;
+  align-items:   center;
+  gap:           1rem;
+  transition:    transform .15s ease, box-shadow .15s ease;
+}
+.kpi-card:hover {
+  transform:   translateY(-2px);
+  box-shadow:  0 8px 24px rgba(0,0,0,.4);
+}
+.kpi-icon {
+  width:          42px;
+  height:         42px;
+  border-radius:  10px;
+  display:        flex;
+  align-items:    center;
+  justify-content:center;
+  font-size:      1.2rem;
+  flex-shrink:    0;
+}
+.bg-blue   { background: rgba(59,130,246,.2); color: #3b82f6; }
+.bg-red    { background: rgba(239, 68, 68,.2); color: #ef4444; }
+.bg-orange { background: rgba(249,115, 22,.2); color: #f97316; }
+.bg-green  { background: rgba( 34,197, 94,.2); color: #22c55e; }
+.bg-purple { background: rgba(139, 92,246,.2); color: #8b5cf6; }
+
+.kpi-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.kpi-value { font-size: 1.4rem; font-weight: 700; line-height: 1.1; }
+
+/* ── Filter Bar ─────────────────────────────────────────── */
+.filter-bar {
+  background:    var(--card);
+  border:        1px solid var(--border);
+  border-radius: 10px;
+  padding:       .85rem 1.2rem;
+}
+
+/* ── Table Card ─────────────────────────────────────────── */
+.table-card {
+  background:    var(--card);
+  border:        1px solid var(--border);
+  border-radius: 12px;
+  overflow:      hidden;
+  margin-bottom: 2rem;
+}
+.table-header {
+  padding:       .85rem 1.2rem;
+  background:    #151f2e;
+  border-bottom: 1px solid var(--border);
+  font-weight:   600;
+  font-size:     .92rem;
+}
+
+.table { margin-bottom: 0; color: var(--text); }
+.table thead th {
+  background:     #151f2e;
+  border-bottom:  1px solid var(--border);
+  color:          var(--muted);
+  font-size:      .72rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding:        .6rem 1rem;
+  white-space:    nowrap;
+}
+.table tbody td {
+  border-color:  var(--border);
+  padding:       .6rem 1rem;
+  vertical-align:middle;
+  font-size:     .85rem;
+}
+.table-hover tbody tr:hover { background: rgba(59,130,246,.06); }
+
+/* ── Badges ─────────────────────────────────────────────── */
+/* Severity */
+.sev-critical { background: rgba(239,68,68,.15) !important;  color: #ef4444 !important; }
+.sev-high     { background: rgba(249,115,22,.15)!important;  color: #f97316 !important; }
+.sev-medium   { background: rgba(234,179, 8,.15)!important;  color: #eab308 !important; }
+.sev-low      { background: rgba( 34,197,94,.15)!important;  color: #22c55e !important; }
+
+/* Status */
+.status-resolved     { background: rgba( 34,197,94,.15)!important; color: #22c55e !important; }
+.status-investigating{ background: rgba(249,115,22,.15)!important; color: #f97316 !important; }
+.status-monitoring   { background: rgba( 59,130,246,.15)!important;color: #3b82f6 !important; }
+
+/* Provider */
+.provider-aws       { background: rgba(251,191, 36,.15)!important; color: #fbbf24 !important; }
+.provider-gcp       { background: rgba( 59,130,246,.15)!important; color: #3b82f6 !important; }
+.provider-azure     { background: rgba( 99,102,241,.15)!important; color: #6366f1 !important; }
+.provider-ibm       { background: rgba( 20,184,166,.15)!important; color: #14b8a6 !important; }
+.provider-oracle    { background: rgba(239, 68,68,.15)!important;  color: #ef4444 !important; }
+.provider-cloudflare{ background: rgba(249,115,22,.15)!important;  color: #f97316 !important; }
+
+/* ── Action Buttons ─────────────────────────────────────── */
+.btn-xs {
+  padding:     .2rem .45rem;
+  font-size:   .75rem;
+  line-height: 1.4;
+}
+
+/* ── Chart Cards ─────────────────────────────────────────── */
+.chart-card {
+  background:    var(--card);
+  border:        1px solid var(--border);
+  border-radius: 12px;
+  padding:       1.25rem;
+  height:        100%;
+}
+.chart-title {
+  font-size:     .82rem;
+  font-weight:   600;
+  color:         var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom: 1rem;
+}
+
+/* ── Modals ─────────────────────────────────────────────── */
+.modal-content {
+  background: var(--card);
+  border:     1px solid var(--border);
+  color:      var(--text);
+}
+.modal-body { background: var(--card); }
+.modal-footer { background: #151f2e; border-top: 1px solid var(--border); }
+
+.form-control, .form-select {
+  background:   #0f172a;
+  border-color: var(--border);
+  color:        var(--text);
+}
+.form-control:focus, .form-select:focus {
+  background:   #0f172a;
+  border-color: var(--accent);
+  color:        var(--text);
+  box-shadow:   0 0 0 .2rem rgba(59,130,246,.25);
+}
+.form-control::placeholder { color: var(--muted); }
+.form-label { font-size: .8rem; color: var(--muted); margin-bottom: .3rem; }
+.form-check-label { font-size: .85rem; }
+
+/* ── Alerts ─────────────────────────────────────────────── */
+.alert { border-radius: 8px; }
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--navy); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }

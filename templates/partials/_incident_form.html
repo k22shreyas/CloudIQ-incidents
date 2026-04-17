@@ -1,0 +1,157 @@
+<div class="row g-3">
+  <div class="col-md-4">
+    <label class="form-label">Provider *</label>
+    <select name="provider_id" class="form-select" required>
+      <option value="">— Select —</option>
+      {% for p in providers %}
+        <option value="{{ p['provider_id'] }}">{{ p['name'] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Region *</label>
+    <select name="region_id" class="form-select" required>
+      <option value="">— Select —</option>
+      {% for r in regions %}
+        <option value="{{ r['region_id'] }}">{{ r['name'] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Service *</label>
+    <select name="service_id" class="form-select" required>
+      <option value="">— Select —</option>
+      {% for s in services %}
+        <option value="{{ s['service_id'] }}">{{ s['name'] }}{% if s['subtype'] %} / {{ s['subtype'] }}{% endif %}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Root Cause Category</label>
+    <select name="category_id" class="form-select">
+      <option value="">— Select —</option>
+      {% for c in categories %}
+        <option value="{{ c['category_id'] }}">{{ c['name'] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Severity *</label>
+    <select name="severity" class="form-select" required>
+      {% for s in ['Low', 'Medium', 'High', 'Critical'] %}
+        <option value="{{ s }}">{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Status *</label>
+    <select name="status" class="form-select" required>
+      {% for s in ['Resolved', 'Investigating', 'Monitoring'] %}
+        <option value="{{ s }}">{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Start Time *</label>
+    <input type="datetime-local" name="start_time" class="form-control" required />
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">End Time</label>
+    <input type="datetime-local" name="end_time" class="form-control" />
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Ticket Count</label>
+    <input type="number" name="ticket_count" class="form-control" min="0" value="0" />
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Root Cause Description</label>
+    <textarea name="root_cause_description" class="form-control" rows="2"></textarea>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Customers Affected</label>
+    <input type="number" name="customers_affected" class="form-control" min="0" />
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Revenue Loss (USD)</label>
+    <input type="number" name="revenue_loss_usd" class="form-control" min="0" step="0.01" />
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Region Impact Score</label>
+    <input type="number" name="region_impact_score" class="form-control" min="0" max="100" step="0.1" />
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Service Impact Score</label>
+    <input type="number" name="service_impact_score" class="form-control" min="0" max="100" step="0.1" />
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Detection Method</label>
+    <select name="detection_method" class="form-select">
+      <option value="">—</option>
+      {% for s in ['Alert', 'Automated Monitoring', 'Customer Report'] %}
+        <option value="{{ s }}">{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Mitigation Action</label>
+    <select name="mitigation_action" class="form-select">
+      <option value="">—</option>
+      {% for s in ['Rollback', 'Patch', 'Restart', 'Scale Up'] %}
+        <option value="{{ s }}">{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Engineers Involved</label>
+    <input type="number" name="engineers_involved" class="form-control" min="1" value="1" />
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Eng. Response Time (min)</label>
+    <input type="number" name="engineer_response_time_minutes" class="form-control" min="0" />
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">External Factors</label>
+    <select name="external_factors" class="form-select">
+      <option value="">None</option>
+      {% for s in ['DDoS', 'Weather', 'Vendor', 'None'] %}
+        <option value="{{ s }}">{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">User Feedback Score (1–5)</label>
+    <input type="number" name="user_feedback_score" class="form-control" min="1" max="5" step="0.1" />
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">System Load Before (%)</label>
+    <input type="number" name="system_load_before" class="form-control" min="0" max="100" step="0.1" />
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">System Load After (%)</label>
+    <input type="number" name="system_load_after" class="form-control" min="0" max="100" step="0.1" />
+  </div>
+  <div class="col-12">
+    <div class="d-flex gap-4 flex-wrap">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="sla_violation" id="sla" />
+        <label class="form-check-label" for="sla">SLA Violation</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="backup_triggered" id="bk" />
+        <label class="form-check-label" for="bk">Backup Triggered</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="post_mortem_completed" id="pm" />
+        <label class="form-check-label" for="pm">Post-Mortem Completed</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="is_recurrent" id="rc" />
+        <label class="form-check-label" for="rc">Recurrent Issue</label>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <label class="form-label">Notes</label>
+    <textarea name="notes" class="form-control" rows="2"></textarea>
+  </div>
+</div>
