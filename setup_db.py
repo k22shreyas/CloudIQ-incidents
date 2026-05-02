@@ -231,6 +231,18 @@ def read_csv_rows(csv_path: Path) -> List[Dict[str, Any]]:
     return rows
 
 
+# Maps DB column names → alternative CSV-normalized column names
+CSV_COLUMN_ALIASES: Dict[str, str] = {
+    "customers_affected":        "number_of_customers_affected",
+    "revenue_loss_usd":          "estimated_revenue_loss_usd",
+    "engineers_involved":        "number_of_engineers_involved",
+    "backup_triggered":          "backup_system_triggered",
+    "is_recurrent":              "is_recurrent_issue",
+    "system_load_before":        "system_load_before_outage",
+    "system_load_after":         "system_load_after_outage",
+}
+
+
 def build_incident_row(
     row: Dict[str, Any],
     lookup_maps: Dict[str, Dict[str, int]],
@@ -252,7 +264,7 @@ def build_incident_row(
     for col in INCIDENT_COLUMNS:
         if col in values:
             continue
-        raw = row.get(col)
+        raw = row.get(col) if row.get(col) is not None else row.get(CSV_COLUMN_ALIASES.get(col, ""))
         if col in BOOL_COLUMNS:
             values[col] = coerce_bool(raw)
         elif col in INT_COLUMNS:

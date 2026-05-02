@@ -1,16 +1,4 @@
 -- =============================================================
--- Author: Disha Churi & Shreyas Karanam
--- Course: Graduate Database Systems
--- Project: Cloud Infrastructure Incident Database
--- Description: Normalized (3NF) relational schema for tracking
---              cloud provider outages, root causes, affected
---              services, and incident response metrics.
--- Database: SQLite 3
--- =============================================================
-
-
-
--- =============================================================
 -- DROP TABLES (for clean re-initialization)
 -- =============================================================
 DROP TABLE IF EXISTS incident_services;

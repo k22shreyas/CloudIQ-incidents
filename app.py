@@ -17,6 +17,7 @@ from flask import (Flask, render_template, request, jsonify,
 app = Flask(__name__)
 app.secret_key = "cloud_incidents_secret_2024"
 
+PER_PAGE = 50
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH  = os.path.join(BASE_DIR, "cloud_incidents.db")
 SQL_PATH = os.path.join(BASE_DIR, "database", "schema.sql")
@@ -140,28 +141,49 @@ def index():
     status    = request.args.get("status", "")
     provider  = request.args.get("provider", "")
 
-    sql    = INCIDENTS_JOIN + " WHERE 1=1"
-    params = []
+    try:
+        page = max(1, int(request.args.get("page", 1) or 1))
+    except (ValueError, TypeError):
+        page = 1
 
+    # Build shared WHERE clause
+    where_sql = " WHERE 1=1"
+    params    = []
     if search:
-        sql += """ AND (p.name LIKE ? OR r.name LIKE ? OR s.name LIKE ?
-                        OR i.root_cause_description LIKE ?)"""
+        where_sql += """ AND (p.name LIKE ? OR r.name LIKE ? OR s.name LIKE ?
+                              OR i.root_cause_description LIKE ?)"""
         like = f"%{search}%"
         params += [like, like, like, like]
     if severity:
-        sql += " AND i.severity = ?"
+        where_sql += " AND i.severity = ?"
         params.append(severity)
     if status:
-        sql += " AND i.status = ?"
+        where_sql += " AND i.status = ?"
         params.append(status)
     if provider:
-        sql += " AND p.name = ?"
+        where_sql += " AND p.name = ?"
         params.append(provider)
 
-    sql += " ORDER BY i.start_time DESC"
-    incidents = query_db(sql, params)
+    # Total matching count
+    count_sql = (
+        "SELECT COUNT(*) FROM incidents i"
+        " JOIN providers p ON i.provider_id = p.provider_id"
+        " JOIN regions r ON i.region_id = r.region_id"
+        " JOIN services s ON i.service_id = s.service_id"
+        " LEFT JOIN root_cause_categories c ON i.category_id = c.category_id"
+        + where_sql
+    )
+    total_count = query_db(count_sql, params, one=True)[0]
+    total_pages = max(1, (total_count + PER_PAGE - 1) // PER_PAGE)
+    page        = min(page, total_pages)
 
-    # summary KPIs
+    # Paginated incidents
+    incidents = query_db(
+        INCIDENTS_JOIN + where_sql + " ORDER BY i.start_time DESC LIMIT ? OFFSET ?",
+        params + [PER_PAGE, (page - 1) * PER_PAGE]
+    )
+
+    # Summary KPIs (always global)
     kpis = query_db("""
         SELECT COUNT(*)                          AS total,
                SUM(revenue_loss_usd)             AS total_loss,
@@ -180,7 +202,11 @@ def index():
                            search=search,
                            sel_severity=severity,
                            sel_status=status,
-                           sel_provider=provider)
+                           sel_provider=provider,
+                           page=page,
+                           total_pages=total_pages,
+                           total_count=total_count,
+                           per_page=PER_PAGE)
 
 
 # ── CREATE: add a new incident ───────────────────────────────

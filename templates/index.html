@@ -1,241 +1,237 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cloud Incident Database</title>
+  <title>CloudIQ — Incident Database</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
 </head>
 <body>
 
-<!-- ═══════════ NAVBAR ═══════════ -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark-navy px-4">
-  <a class="navbar-brand fw-bold" href="/">
-    <i class="bi bi-cloud-lightning-fill text-accent me-2"></i>CloudIQ Incidents
+<nav class="topnav">
+  <a class="topnav-brand" href="/">
+    <span class="brand-icon">⬡</span>
+    <span class="brand-text">CloudIQ</span>
   </a>
-  <div class="ms-auto d-flex gap-3">
-    <a href="/" class="nav-link text-white active"><i class="bi bi-table me-1"></i>Incidents</a>
-    <a href="/analytics" class="nav-link text-white"><i class="bi bi-bar-chart-line me-1"></i>Analytics</a>
-    <button class="btn btn-accent btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
-      <i class="bi bi-plus-lg me-1"></i>New Incident
-    </button>
+  <div class="topnav-links">
+    <a href="/" class="nav-pill active">Incidents</a>
+    <a href="/analytics" class="nav-pill">Analytics</a>
+    <button class="btn-new" data-bs-toggle="modal" data-bs-target="#addModal">+ New Incident</button>
   </div>
 </nav>
 
-<!-- ═══════════ FLASH MESSAGES ═══════════ -->
-<div class="container-fluid px-4 pt-3">
+<div class="main-wrap">
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for cat, msg in messages %}
-      <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
-        {{ msg }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      <div class="alert alert-{{ cat }} alert-dismissible fade show mt-3" role="alert">
+        {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
     {% endfor %}
   {% endwith %}
 
-  <!-- ═══════════ KPI CARDS ═══════════ -->
-  <div class="row g-3 mb-4 mt-1">
-    <div class="col-6 col-md-3">
-      <div class="kpi-card">
-        <div class="kpi-icon bg-blue"><i class="bi bi-exclamation-triangle-fill"></i></div>
-        <div>
-          <div class="kpi-label">Total Incidents</div>
-          <div class="kpi-value">{{ kpis['total'] or 0 }}</div>
-        </div>
-      </div>
+  <div class="kpi-strip">
+    <div class="kpi-item">
+      <span class="kpi-num">{{ '{:,}'.format(kpis['total'] or 0) }}</span>
+      <span class="kpi-lbl">Total Incidents</span>
     </div>
-    <div class="col-6 col-md-3">
-      <div class="kpi-card">
-        <div class="kpi-icon bg-red"><i class="bi bi-currency-dollar"></i></div>
-        <div>
-          <div class="kpi-label">Total Revenue Loss</div>
-          <div class="kpi-value">${{ '{:,.0f}'.format((kpis['total_loss'] or 0) / 1000000) }}M</div>
-        </div>
-      </div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item">
+      <span class="kpi-num">${{ '{:,.1f}'.format((kpis['total_loss'] or 0) / 1000000) }}M</span>
+      <span class="kpi-lbl">Revenue Lost</span>
     </div>
-    <div class="col-6 col-md-3">
-      <div class="kpi-card">
-        <div class="kpi-icon bg-orange"><i class="bi bi-people-fill"></i></div>
-        <div>
-          <div class="kpi-label">Customers Affected</div>
-          <div class="kpi-value">{{ '{:,.0f}'.format(kpis['total_customers'] or 0) }}</div>
-        </div>
-      </div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item">
+      <span class="kpi-num">{{ '{:,.0f}'.format((kpis['total_customers'] or 0) / 1000000) }}M</span>
+      <span class="kpi-lbl">Customers Affected</span>
     </div>
-    <div class="col-6 col-md-3">
-      <div class="kpi-card">
-        <div class="kpi-icon bg-green"><i class="bi bi-clock-history"></i></div>
-        <div>
-          <div class="kpi-label">Avg Duration</div>
-          <div class="kpi-value">{{ kpis['avg_duration'] or 0 }} min</div>
-        </div>
-      </div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item">
+      <span class="kpi-num">{{ kpis['avg_duration'] or 0 }}<small>min</small></span>
+      <span class="kpi-lbl">Avg Duration</span>
     </div>
   </div>
 
-  <!-- ═══════════ FILTER BAR ═══════════ -->
-  <div class="filter-bar mb-3">
-    <form method="GET" action="/" class="d-flex flex-wrap gap-2 align-items-end">
-      <div>
-        <label class="form-label small mb-1">Search</label>
-        <input type="text" name="search" class="form-control form-control-sm"
-               placeholder="Provider, region, service…" value="{{ search }}"/>
-      </div>
-      <div>
-        <label class="form-label small mb-1">Severity</label>
-        <select name="severity" class="form-select form-select-sm">
-          <option value="">All</option>
-          {% for s in ['Critical','High','Medium','Low'] %}
-            <option value="{{ s }}" {% if sel_severity==s %}selected{% endif %}>{{ s }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label class="form-label small mb-1">Status</label>
-        <select name="status" class="form-select form-select-sm">
-          <option value="">All</option>
-          {% for s in ['Resolved','Investigating','Monitoring'] %}
-            <option value="{{ s }}" {% if sel_status==s %}selected{% endif %}>{{ s }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label class="form-label small mb-1">Provider</label>
-        <select name="provider" class="form-select form-select-sm">
-          <option value="">All</option>
-          {% for p in providers %}
-            <option value="{{ p['name'] }}" {% if sel_provider==p['name'] %}selected{% endif %}>{{ p['name'] }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
-      <a href="/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i>Clear</a>
-    </form>
-  </div>
+  <form method="GET" action="/" class="filter-row">
+    <input type="text" name="search" class="f-input" placeholder="Search provider, region, service…" value="{{ search }}"/>
+    <select name="severity" class="f-select">
+      <option value="">All Severities</option>
+      {% for s in ['Critical','High','Medium','Low'] %}
+        <option value="{{ s }}" {% if sel_severity==s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select name="status" class="f-select">
+      <option value="">All Statuses</option>
+      {% for s in ['Resolved','Investigating','Monitoring'] %}
+        <option value="{{ s }}" {% if sel_status==s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select name="provider" class="f-select">
+      <option value="">All Providers</option>
+      {% for p in providers %}
+        <option value="{{ p['name'] }}" {% if sel_provider==p['name'] %}selected{% endif %}>{{ p['name'] }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="f-btn-apply">Apply</button>
+    {% if search or sel_severity or sel_status or sel_provider %}
+      <a href="/" class="f-btn-clear">Clear</a>
+    {% endif %}
+  </form>
 
-  <!-- ═══════════ INCIDENT TABLE ═══════════ -->
-  <div class="table-card">
-    <div class="table-header d-flex justify-content-between align-items-center">
-      <span><i class="bi bi-list-ul me-2"></i>Incidents
-        <span class="badge bg-secondary ms-2">{{ incidents|length }}</span>
-      </span>
+  <div class="data-section">
+    <div class="data-header">
+      <div class="data-header-left">
+        <span class="data-title">Incident Log</span>
+        <span class="data-count">{{ '{:,}'.format(total_count) }} records</span>
+      </div>
+      <div class="data-header-right">
+        {% if total_count > 0 %}
+          <span class="page-info">{{ (page-1)*per_page + 1 }}–{{ [page*per_page, total_count]|min }} of {{ '{:,}'.format(total_count) }}</span>
+        {% endif %}
+      </div>
     </div>
-    <div class="table-responsive">
-      <table class="table table-hover mb-0" id="incidentTable">
+
+    <div class="table-wrap">
+      <table class="data-table">
         <thead>
           <tr>
-            <th>Provider</th><th>Region</th><th>Service</th>
-            <th>Severity</th><th>Status</th><th>Duration</th>
-            <th>Root Cause</th><th>Customers</th><th>Revenue Loss</th>
-            <th>SLA</th><th>Actions</th>
+            <th class="col-sev">SEV</th>
+            <th>Provider</th>
+            <th>Region</th>
+            <th>Service</th>
+            <th>Status</th>
+            <th class="num-col">Duration</th>
+            <th>Root Cause</th>
+            <th class="num-col">Customers</th>
+            <th class="num-col">Revenue Loss</th>
+            <th class="center-col">SLA</th>
+            <th class="center-col">Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for i in incidents %}
-          <tr>
-            <td><span class="badge provider-{{ i['provider']|lower|replace(' ','-') }}">{{ i['provider'] }}</span></td>
-            <td><small class="text-muted">{{ i['region'] }}</small></td>
-            <td>{{ i['service'] }}<br><small class="text-muted">{{ i['subtype'] or '' }}</small></td>
-            <td>
-              <span class="badge sev-{{ i['severity']|lower }}">{{ i['severity'] }}</span>
+          <tr class="sev-row-{{ i['severity']|lower }}">
+            <td class="col-sev">
+              <span class="sev-dot sev-{{ i['severity']|lower }}" title="{{ i['severity'] }}"></span>
             </td>
+            <td><span class="provider-tag provider-{{ i['provider']|lower|replace(' ','-') }}">{{ i['provider'] }}</span></td>
+            <td class="muted-cell">{{ i['region'] }}</td>
             <td>
-              <span class="badge status-{{ i['status']|lower }}">{{ i['status'] }}</span>
+              {{ i['service'] }}
+              {% if i['subtype'] %}<div class="sub-label">{{ i['subtype'] }}</div>{% endif %}
             </td>
-            <td>{{ i['duration_minutes'] or '—' }} min</td>
-            <td><small>{{ i['root_cause'] or '—' }}</small></td>
-            <td>{{ '{:,}'.format(i['customers_affected']) if i['customers_affected'] else '—' }}</td>
-            <td class="text-danger fw-semibold">
-              {% if i['revenue_loss_usd'] %}
-                ${{ '{:,.0f}'.format(i['revenue_loss_usd']) }}
-              {% else %}—{% endif %}
+            <td><span class="status-chip status-{{ i['status']|lower }}">{{ i['status'] }}</span></td>
+            <td class="num-col mono">{{ i['duration_minutes'] or '—' }}{% if i['duration_minutes'] %}<span class="unit">m</span>{% endif %}</td>
+            <td class="muted-cell small-text">{{ i['root_cause'] or '—' }}</td>
+            <td class="num-col mono">{{ '{:,.0f}'.format(i['customers_affected']) if i['customers_affected'] else '—' }}</td>
+            <td class="num-col mono loss-cell">{% if i['revenue_loss_usd'] %}${{ '{:,.0f}'.format(i['revenue_loss_usd']) }}{% else %}—{% endif %}</td>
+            <td class="center-col">
+              {% if i['sla_violation'] %}<span class="sla-yes">YES</span>{% else %}<span class="sla-no">—</span>{% endif %}
             </td>
-            <td>
-              {% if i['sla_violation'] %}
-                <span class="badge bg-danger">Yes</span>
-              {% else %}
-                <span class="badge bg-success">No</span>
-              {% endif %}
-            </td>
-            <td>
-              <button class="btn btn-xs btn-outline-primary me-1"
-                      onclick="openEditModal('{{ i['incident_id'] }}')">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn btn-xs btn-outline-danger"
-                      onclick="confirmDelete('{{ i['incident_id'] }}')">
-                <i class="bi bi-trash"></i>
-              </button>
+            <td class="center-col action-cell">
+              <button class="act-btn act-edit" onclick="openEditModal('{{ i['incident_id'] }}')" title="Edit">✎</button>
+              <button class="act-btn act-del" onclick="confirmDelete('{{ i['incident_id'] }}')" title="Delete">✕</button>
             </td>
           </tr>
           {% else %}
-          <tr><td colspan="11" class="text-center text-muted py-4">No incidents found.</td></tr>
+          <tr><td colspan="11" class="empty-row">No incidents match the current filters.</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
+    {% if total_pages > 1 %}
+    {% set base = '/?search=' + search + '&severity=' + sel_severity + '&status=' + sel_status + '&provider=' + sel_provider %}
+    <div class="pagination-bar">
+      <div class="pag-side">
+        {% if page > 1 %}
+          <a href="{{ base }}&page=1" class="pag-btn">«</a>
+          <a href="{{ base }}&page={{ page - 1 }}" class="pag-btn">‹ Prev</a>
+        {% else %}
+          <span class="pag-btn disabled">«</span>
+          <span class="pag-btn disabled">‹ Prev</span>
+        {% endif %}
+      </div>
+      <div class="pag-pages">
+        {% set start_p = [1, page - 2]|max %}
+        {% set end_p   = [total_pages, page + 2]|min %}
+        {% if start_p > 1 %}
+          <a href="{{ base }}&page=1" class="pag-num">1</a>
+          {% if start_p > 2 %}<span class="pag-ellipsis">…</span>{% endif %}
+        {% endif %}
+        {% for p in range(start_p, end_p + 1) %}
+          {% if p == page %}<span class="pag-num current">{{ p }}</span>
+          {% else %}<a href="{{ base }}&page={{ p }}" class="pag-num">{{ p }}</a>{% endif %}
+        {% endfor %}
+        {% if end_p < total_pages %}
+          {% if end_p < total_pages - 1 %}<span class="pag-ellipsis">…</span>{% endif %}
+          <a href="{{ base }}&page={{ total_pages }}" class="pag-num">{{ total_pages }}</a>
+        {% endif %}
+      </div>
+      <div class="pag-side">
+        {% if page < total_pages %}
+          <a href="{{ base }}&page={{ page + 1 }}" class="pag-btn">Next ›</a>
+          <a href="{{ base }}&page={{ total_pages }}" class="pag-btn">»</a>
+        {% else %}
+          <span class="pag-btn disabled">Next ›</span>
+          <span class="pag-btn disabled">»</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
   </div>
-</div><!-- /container -->
+</div>
 
-
-<!-- ═══════════ ADD MODAL ═══════════ -->
+<!-- ADD MODAL -->
 <div class="modal fade" id="addModal" tabindex="-1">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header bg-dark-navy text-white">
-        <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Add New Incident</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
+      <div class="modal-header"><h5 class="modal-title">Add New Incident</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
       <form method="POST" action="/add">
-        <div class="modal-body">
-          {% include 'partials/_incident_form.html' %}
-        </div>
+        <div class="modal-body">{% include 'partials/_incident_form.html' %}</div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-accent"><i class="bi bi-save me-1"></i>Save Incident</button>
+          <button type="submit" class="btn btn-primary">Save Incident</button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<!-- ═══════════ EDIT MODAL ═══════════ -->
+<!-- EDIT MODAL -->
 <div class="modal fade" id="editModal" tabindex="-1">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Edit Incident</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
+      <div class="modal-header"><h5 class="modal-title">Edit Incident</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
       <form method="POST" id="editForm">
         <div class="modal-body" id="editFormBody">
           <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Update</button>
+          <button type="submit" class="btn btn-primary">Update</button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<!-- ═══════════ DELETE CONFIRM MODAL ═══════════ -->
+<!-- DELETE MODAL -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Confirm Delete</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">Are you sure you want to delete this incident? This action cannot be undone.</div>
+      <div class="modal-header"><h5 class="modal-title">Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">Delete this incident? This cannot be undone.</div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <form id="deleteForm" method="POST">
-          <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Delete</button>
-        </form>
+        <form id="deleteForm" method="POST"><button type="submit" class="btn btn-danger">Delete</button></form>
       </div>
     </div>
   </div>
@@ -243,7 +239,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script>
-// ── Shared form HTML (for edit modal) ──────────────────────
 const PROVIDERS  = {{ providers | tojson }};
 const REGIONS    = {{ regions   | tojson }};
 const SERVICES   = {{ services  | tojson }};
@@ -252,179 +247,76 @@ const CATEGORIES = {{ categories| tojson }};
 function buildFormHTML(data = {}) {
   const sel = (arr, valKey, labelFn, selected) =>
     arr.map(r => `<option value="${r[valKey]}" ${r[valKey]==selected?'selected':''}>${labelFn(r)}</option>`).join('');
-
-  const fmtDT = (s) => s ? s.replace(' ','T').slice(0,16) : '';
-
+  const fmtDT = s => s ? s.replace(' ','T').slice(0,16) : '';
   return `
   <div class="row g-3">
-    <div class="col-md-4">
-      <label class="form-label">Provider *</label>
-      <select name="provider_id" class="form-select" required>
-        ${sel(PROVIDERS,'provider_id',r=>r.name, data.provider_id)}
-      </select>
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Region *</label>
-      <select name="region_id" class="form-select" required>
-        ${sel(REGIONS,'region_id',r=>r.name, data.region_id)}
-      </select>
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Service *</label>
-      <select name="service_id" class="form-select" required>
-        ${sel(SERVICES,'service_id',r=>`${r.name} / ${r.subtype||'—'}`, data.service_id)}
-      </select>
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Root Cause Category</label>
-      <select name="category_id" class="form-select">
-        <option value="">— Select —</option>
-        ${sel(CATEGORIES,'category_id',r=>r.name, data.category_id)}
-      </select>
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Severity *</label>
-      <select name="severity" class="form-select" required>
-        ${['Low','Medium','High','Critical'].map(s=>`<option ${s==data.severity?'selected':''}>${s}</option>`).join('')}
-      </select>
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Status *</label>
-      <select name="status" class="form-select" required>
-        ${['Resolved','Investigating','Monitoring'].map(s=>`<option ${s==data.status?'selected':''}>${s}</option>`).join('')}
-      </select>
-    </div>
-    <div class="col-md-6">
-      <label class="form-label">Start Time *</label>
-      <input type="datetime-local" name="start_time" class="form-control" required
-             value="${fmtDT(data.start_time)}"/>
-    </div>
-    <div class="col-md-6">
-      <label class="form-label">End Time</label>
-      <input type="datetime-local" name="end_time" class="form-control"
-             value="${fmtDT(data.end_time)}"/>
-    </div>
-    <div class="col-md-12">
-      <label class="form-label">Root Cause Description</label>
-      <textarea name="root_cause_description" class="form-control" rows="2">${data.root_cause_description||''}</textarea>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Customers Affected</label>
-      <input type="number" name="customers_affected" class="form-control" min="0"
-             value="${data.customers_affected||''}"/>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Revenue Loss (USD)</label>
-      <input type="number" name="revenue_loss_usd" class="form-control" min="0" step="0.01"
-             value="${data.revenue_loss_usd||''}"/>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Region Impact Score</label>
-      <input type="number" name="region_impact_score" class="form-control" min="0" max="100" step="0.1"
-             value="${data.region_impact_score||''}"/>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Service Impact Score</label>
-      <input type="number" name="service_impact_score" class="form-control" min="0" max="100" step="0.1"
-             value="${data.service_impact_score||''}"/>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Detection Method</label>
-      <select name="detection_method" class="form-select">
-        <option value="">—</option>
-        ${['Alert','Automated Monitoring','Customer Report'].map(s=>`<option ${s==data.detection_method?'selected':''}>${s}</option>`).join('')}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Mitigation Action</label>
-      <select name="mitigation_action" class="form-select">
-        <option value="">—</option>
-        ${['Rollback','Patch','Restart','Scale Up'].map(s=>`<option ${s==data.mitigation_action?'selected':''}>${s}</option>`).join('')}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Engineers Involved</label>
-      <input type="number" name="engineers_involved" class="form-control" min="1"
-             value="${data.engineers_involved||1}"/>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Eng. Response Time (min)</label>
-      <input type="number" name="engineer_response_time_minutes" class="form-control" min="0"
-             value="${data.engineer_response_time_minutes||''}"/>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">External Factors</label>
-      <select name="external_factors" class="form-select">
-        <option value="">None</option>
-        ${['DDoS','Weather','Vendor','None'].map(s=>`<option ${s==data.external_factors?'selected':''}>${s}</option>`).join('')}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">User Feedback Score (1–5)</label>
-      <input type="number" name="user_feedback_score" class="form-control" min="1" max="5" step="0.1"
-             value="${data.user_feedback_score||''}"/>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">System Load Before (%)</label>
-      <input type="number" name="system_load_before" class="form-control" min="0" max="100" step="0.1"
-             value="${data.system_load_before||''}"/>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">System Load After (%)</label>
-      <input type="number" name="system_load_after" class="form-control" min="0" max="100" step="0.1"
-             value="${data.system_load_after||''}"/>
-    </div>
-    <div class="col-12">
-      <div class="d-flex gap-4 flex-wrap">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" name="sla_violation" id="sla"
-                 ${data.sla_violation?'checked':''}/>
-          <label class="form-check-label" for="sla">SLA Violation</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" name="backup_triggered" id="bk"
-                 ${data.backup_triggered?'checked':''}/>
-          <label class="form-check-label" for="bk">Backup Triggered</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" name="post_mortem_completed" id="pm"
-                 ${data.post_mortem_completed?'checked':''}/>
-          <label class="form-check-label" for="pm">Post-Mortem Completed</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" name="is_recurrent" id="rc"
-                 ${data.is_recurrent?'checked':''}/>
-          <label class="form-check-label" for="rc">Recurrent Issue</label>
-        </div>
-      </div>
-    </div>
-    <div class="col-12">
-      <label class="form-label">Notes</label>
-      <textarea name="notes" class="form-control" rows="2">${data.notes||''}</textarea>
-    </div>
+    <div class="col-md-4"><label class="form-label">Provider *</label>
+      <select name="provider_id" class="form-select" required>${sel(PROVIDERS,'provider_id',r=>r.name,data.provider_id)}</select></div>
+    <div class="col-md-4"><label class="form-label">Region *</label>
+      <select name="region_id" class="form-select" required>${sel(REGIONS,'region_id',r=>r.name,data.region_id)}</select></div>
+    <div class="col-md-4"><label class="form-label">Service *</label>
+      <select name="service_id" class="form-select" required>${sel(SERVICES,'service_id',r=>`${r.name} / ${r.subtype||'—'}`,data.service_id)}</select></div>
+    <div class="col-md-4"><label class="form-label">Root Cause Category</label>
+      <select name="category_id" class="form-select"><option value="">— Select —</option>${sel(CATEGORIES,'category_id',r=>r.name,data.category_id)}</select></div>
+    <div class="col-md-4"><label class="form-label">Severity *</label>
+      <select name="severity" class="form-select" required>${['Low','Medium','High','Critical'].map(s=>`<option ${s==data.severity?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="col-md-4"><label class="form-label">Status *</label>
+      <select name="status" class="form-select" required>${['Resolved','Investigating','Monitoring'].map(s=>`<option ${s==data.status?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="col-md-6"><label class="form-label">Start Time *</label>
+      <input type="datetime-local" name="start_time" class="form-control" required value="${fmtDT(data.start_time)}"/></div>
+    <div class="col-md-6"><label class="form-label">End Time</label>
+      <input type="datetime-local" name="end_time" class="form-control" value="${fmtDT(data.end_time)}"/></div>
+    <div class="col-12"><label class="form-label">Root Cause Description</label>
+      <textarea name="root_cause_description" class="form-control" rows="2">${data.root_cause_description||''}</textarea></div>
+    <div class="col-md-3"><label class="form-label">Customers Affected</label>
+      <input type="number" name="customers_affected" class="form-control" min="0" value="${data.customers_affected||''}"/></div>
+    <div class="col-md-3"><label class="form-label">Revenue Loss (USD)</label>
+      <input type="number" name="revenue_loss_usd" class="form-control" min="0" step="0.01" value="${data.revenue_loss_usd||''}"/></div>
+    <div class="col-md-3"><label class="form-label">Region Impact Score</label>
+      <input type="number" name="region_impact_score" class="form-control" min="0" max="100" step="0.1" value="${data.region_impact_score||''}"/></div>
+    <div class="col-md-3"><label class="form-label">Service Impact Score</label>
+      <input type="number" name="service_impact_score" class="form-control" min="0" max="100" step="0.1" value="${data.service_impact_score||''}"/></div>
+    <div class="col-md-3"><label class="form-label">Detection Method</label>
+      <select name="detection_method" class="form-select"><option value="">—</option>
+        ${['Alert','Automated Monitoring','Customer Report'].map(s=>`<option ${s==data.detection_method?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="col-md-3"><label class="form-label">Mitigation Action</label>
+      <select name="mitigation_action" class="form-select"><option value="">—</option>
+        ${['Rollback','Patch','Restart','Scale Up'].map(s=>`<option ${s==data.mitigation_action?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="col-md-3"><label class="form-label">Engineers Involved</label>
+      <input type="number" name="engineers_involved" class="form-control" min="1" value="${data.engineers_involved||1}"/></div>
+    <div class="col-md-3"><label class="form-label">Eng. Response Time (min)</label>
+      <input type="number" name="engineer_response_time_minutes" class="form-control" min="0" value="${data.engineer_response_time_minutes||''}"/></div>
+    <div class="col-md-3"><label class="form-label">External Factors</label>
+      <select name="external_factors" class="form-select"><option value="">None</option>
+        ${['DDoS','Weather','Vendor','None'].map(s=>`<option ${s==data.external_factors?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="col-md-3"><label class="form-label">User Feedback (1–5)</label>
+      <input type="number" name="user_feedback_score" class="form-control" min="1" max="5" step="0.1" value="${data.user_feedback_score||''}"/></div>
+    <div class="col-md-3"><label class="form-label">System Load Before (%)</label>
+      <input type="number" name="system_load_before" class="form-control" min="0" max="100" step="0.1" value="${data.system_load_before||''}"/></div>
+    <div class="col-md-3"><label class="form-label">System Load After (%)</label>
+      <input type="number" name="system_load_after" class="form-control" min="0" max="100" step="0.1" value="${data.system_load_after||''}"/></div>
+    <div class="col-12"><div class="d-flex gap-4 flex-wrap">
+      <div class="form-check"><input class="form-check-input" type="checkbox" name="sla_violation" id="sla" ${data.sla_violation?'checked':''}/><label class="form-check-label" for="sla">SLA Violation</label></div>
+      <div class="form-check"><input class="form-check-input" type="checkbox" name="backup_triggered" id="bk" ${data.backup_triggered?'checked':''}/><label class="form-check-label" for="bk">Backup Triggered</label></div>
+      <div class="form-check"><input class="form-check-input" type="checkbox" name="post_mortem_completed" id="pm" ${data.post_mortem_completed?'checked':''}/><label class="form-check-label" for="pm">Post-Mortem Completed</label></div>
+      <div class="form-check"><input class="form-check-input" type="checkbox" name="is_recurrent" id="rc" ${data.is_recurrent?'checked':''}/><label class="form-check-label" for="rc">Recurrent Issue</label></div>
+    </div></div>
+    <div class="col-12"><label class="form-label">Notes</label>
+      <textarea name="notes" class="form-control" rows="2">${data.notes||''}</textarea></div>
   </div>`;
 }
 
-// ── Open Edit Modal ─────────────────────────────────────────
 function openEditModal(id) {
   const modal = new bootstrap.Modal(document.getElementById('editModal'));
-  document.getElementById('editFormBody').innerHTML =
-    '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+  document.getElementById('editFormBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
   document.getElementById('editForm').action = `/update/${id}`;
   modal.show();
-
   fetch(`/incident/${id}`)
     .then(r => r.json())
-    .then(data => {
-      document.getElementById('editFormBody').innerHTML = buildFormHTML(data);
-    })
-    .catch(() => {
-      document.getElementById('editFormBody').innerHTML =
-        '<div class="alert alert-danger">Failed to load incident data.</div>';
-    });
+    .then(data => { document.getElementById('editFormBody').innerHTML = buildFormHTML(data); })
+    .catch(() => { document.getElementById('editFormBody').innerHTML = '<div class="alert alert-danger">Failed to load incident data.</div>'; });
 }
 
-// ── Confirm Delete ──────────────────────────────────────────
 function confirmDelete(id) {
   document.getElementById('deleteForm').action = `/delete/${id}`;
   new bootstrap.Modal(document.getElementById('deleteModal')).show();

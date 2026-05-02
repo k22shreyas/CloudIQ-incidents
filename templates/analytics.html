@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Analytics — Cloud Incident DB</title>
+  <title>Analytics — CloudIQ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
@@ -11,17 +14,18 @@
 <body>
 
 <!-- ═══════════ NAVBAR ═══════════ -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark-navy px-4">
-  <a class="navbar-brand fw-bold" href="/">
-    <i class="bi bi-cloud-lightning-fill text-accent me-2"></i>CloudIQ Incidents
+<nav class="topnav">
+  <a class="topnav-brand" href="/">
+    <span class="brand-icon">⬡</span>
+    <span class="brand-text">CloudIQ</span>
   </a>
-  <div class="ms-auto d-flex gap-3">
-    <a href="/" class="nav-link text-white"><i class="bi bi-table me-1"></i>Incidents</a>
-    <a href="/analytics" class="nav-link text-white active"><i class="bi bi-bar-chart-line me-1"></i>Analytics</a>
+  <div class="topnav-links">
+    <a href="/" class="nav-pill">Incidents</a>
+    <a href="/analytics" class="nav-pill active">Analytics</a>
   </div>
 </nav>
 
-<div class="container-fluid px-4 pt-4" id="analyticsRoot">
+<div class="container-fluid px-4 pt-4" style="max-width:1600px;margin:0 auto;padding-top:24px!important;" id="analyticsRoot">
   <div class="text-center py-5">
     <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
     <p class="text-muted mt-3">Loading analytics…</p>
