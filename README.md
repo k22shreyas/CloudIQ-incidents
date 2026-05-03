@@ -1,7 +1,7 @@
 # Cloud Infrastructure Incident Database & Visualization Platform
 
 > Graduate Database Systems Course Project  
-> Authors: **Disha Churi** (Database Design) · **Shreyas Karanam** (Backend / Flask)
+> Authors: **Disha Churi** (Database Design) · **Shreyas Karanam** (Backend / Flask) · **Linthoi Laishram** (Data Architecture)
 
 ---
 
